@@ -1,9 +1,10 @@
 import { useTheme } from '../../contexts/ThemeContext'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { MdSunny, MdDarkMode } from 'react-icons/md'
 import { FaFacebook, FaTwitter, FaInstagram, FaSearch, FaBars, FaShoppingCart, FaTrash } from 'react-icons/fa'
 import { useState, useEffect } from 'react'
+import Breadcrumb from './Breadcrumb'
 
 const Header = () => {
   const { theme, toggleTheme } = useTheme()
@@ -41,8 +42,18 @@ const Header = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [cartOpen])
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isOpen && !event.target.closest('.hamburger-dropdown') && !event.target.closest('.hamburger-button')) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isOpen])
+
   return (
-    <header className={`${theme === 'dark' ? 'bg-gradient-to-br from-blue-900 to-green-900 backdrop-blur-md border-b border-green-700' : scrolled ? 'bg-blue-600/1 backdrop-blur-md border-b border-blue-700' : 'bg-blue-600 backdrop-blur-md border-b border-blue-700/50'} sticky top-0 z-50 transition-all duration-300`}>
+    <header className={`${theme === 'dark' ? 'bg-gradient-to-br from-blue-900 to-green-900 backdrop-blur-md' : scrolled ? 'bg-blue-600/1 backdrop-blur-md' : 'bg-blue-600 backdrop-blur-md'} sticky top-0 z-50 transition-all duration-300`}>
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -52,7 +63,14 @@ const Header = () => {
           Ramzy Tech
         </motion.div>
 
-        <nav className="hidden lg:flex items-center space-x-8">
+        <div className={`lg:hidden flex items-center border rounded ml-4 ${theme === 'dark' ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-300'} focus-within:ring-2 focus-within:ring-blue-500 hover:border-transparent transition-colors`}>
+          <input type="text" placeholder="Search..." className={`flex-1 px-3 py-1 ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'} focus:outline-none`} />
+          <div className="px-3 py-1 cursor-pointer transition-colors flex items-center justify-center">
+            <FaSearch className="text-gray-500 hover:text-blue-500 hover:scale-110 transition-all" />
+          </div>
+        </div>
+
+        <nav className="hidden lg:flex items-center space-x-12">
           <motion.div whileHover={{ scale: 1.05 }}>
             <Link to="/" className={`${theme === 'dark' ? 'hover:text-blue-400' : scrolled ? 'text-black hover:text-blue-600' : 'text-white hover:text-blue-200'} transition-colors`}>Home</Link>
           </motion.div>
@@ -71,12 +89,12 @@ const Header = () => {
         </nav>
 
         <div className="flex items-center space-x-4">
-          <div className="flex space-x-2">
+          <div className="hidden lg:flex space-x-2">
             <FaFacebook className={`${theme === 'dark' || (theme === 'light' && scrolled) ? 'text-blue-600' : 'text-white'} hover:shadow-lg hover:shadow-blue-600/50 hover:scale-110 transition-all cursor-pointer`} />
             <FaTwitter className="text-blue-400 hover:shadow-lg hover:shadow-blue-400/50 hover:scale-110 transition-all cursor-pointer" />
             <FaInstagram className="text-pink-500 hover:shadow-lg hover:shadow-pink-500/50 hover:scale-110 transition-all cursor-pointer" />
           </div>
-          <button className={`${theme === 'dark' ? 'btn btn-outline-primary' : scrolled ? 'bg-blue-600 text-black hover:bg-blue-700' : 'bg-blue-600 text-white hover:bg-blue-700'} px-4 py-2 rounded transition-colors`}>Login / Signup</button>
+          <button className={`hidden lg:block ${theme === 'dark' ? 'btn btn-outline-primary' : 'bg-blue-600 text-white hover:bg-white hover:text-blue-600 border border-transparent hover:border-blue-600'} px-4 py-2 rounded transition-colors`}>Login / Signup</button>
           <motion.button
             onClick={toggleTheme}
             whileHover={{ scale: 1.1 }}
@@ -148,7 +166,7 @@ const Header = () => {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => setCartOpen(false)}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+                        className={`w-full ${theme === 'dark' ? 'btn btn-outline-primary' : 'bg-blue-600 text-white hover:bg-white hover:text-blue-600 border border-transparent hover:border-blue-600'} font-semibold py-2 px-4 rounded-lg transition-colors`}
                       >
                         View Cart
                       </motion.button>
@@ -161,52 +179,50 @@ const Header = () => {
 
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="lg:hidden p-2 text-gray-800 dark:text-white"
+            className={`hamburger-button lg:hidden p-2 ${theme === 'dark' ? 'text-white' : scrolled ? 'text-black' : 'text-white'} transition-colors`}
           >
             <FaBars />
           </button>
         </div>
       </div>
-      {isOpen && (
-        <div className={`lg:hidden ${theme === 'dark' ? 'bg-gradient-to-br from-blue-900 to-green-900 border-t border-green-700' : 'bg-white border-t border-gray-200'}`}>
-          <div className="container mx-auto px-4 py-4 flex flex-col space-y-4">
+      <Breadcrumb />
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className={`hamburger-dropdown lg:hidden absolute top-full left-0 right-0 z-60 shadow-lg ${theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white'}`}
+          >
+            <div className="container mx-auto px-4 py-4 flex flex-col space-y-4">
             <Link
               to="/"
               onClick={() => setIsOpen(false)}
-              className={`text-center ${theme === 'dark' ? 'hover:text-blue-400' : scrolled ? 'text-black hover:text-blue-600' : 'text-white hover:text-blue-600'} transition-colors`}
+              className={`text-center ${theme === 'dark' ? 'text-white hover:text-blue-400' : 'text-black hover:text-blue-600'} transition-colors`}
             >
               Home
             </Link>
             <Link
               to="/courses"
               onClick={() => setIsOpen(false)}
-              className={`text-center ${theme === 'dark' ? 'hover:text-blue-400' : scrolled ? 'text-black hover:text-blue-600' : 'text-white hover:text-blue-600'} transition-colors`}
+              className={`text-center ${theme === 'dark' ? 'text-white hover:text-blue-400' : 'text-black hover:text-blue-600'} transition-colors`}
             >
               Courses
             </Link>
             <Link
               to="/tracks"
               onClick={() => setIsOpen(false)}
-              className={`text-center ${theme === 'dark' ? 'hover:text-blue-400' : scrolled ? 'text-black hover:text-blue-600' : 'text-white hover:text-blue-600'} transition-colors`}
+              className={`text-center ${theme === 'dark' ? 'text-white hover:text-blue-400' : 'text-black hover:text-blue-600'} transition-colors`}
             >
               Tracks
             </Link>
-            <div className={`flex items-center border rounded ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-100 border-gray-300'} focus-within:ring-2 focus-within:ring-blue-500`}>
-              <input
-                type="text"
-                placeholder="Search..."
-                className={`flex-1 px-3 py-1 ${theme === 'dark' ? 'bg-gray-700 text-white' : 'bg-gray-100 text-black'} focus:outline-none`}
-              />
-              <div className="px-3 py-1 cursor-pointer transition-colors flex items-center justify-center">
-                <FaSearch className="text-gray-500 hover:text-blue-500 hover:scale-110 transition-all" />
-              </div>
-            </div>
             <div className="flex justify-center space-x-4">
               <FaFacebook className={`${theme === 'dark' ? 'text-blue-600' : 'text-blue-600'} hover:shadow-lg hover:shadow-blue-600/50 hover:scale-110 transition-all cursor-pointer`} />
               <FaTwitter className="text-blue-400 hover:shadow-lg hover:shadow-blue-400/50 hover:scale-110 transition-all cursor-pointer" />
               <FaInstagram className="text-pink-500 hover:shadow-lg hover:shadow-pink-500/50 hover:scale-110 transition-all cursor-pointer" />
             </div>
-            <button className={`${theme === 'dark' ? 'bg-white text-blue-600 hover:bg-gray-100' : scrolled ? 'bg-blue-600 text-black hover:bg-blue-700' : 'bg-blue-600 text-white hover:bg-blue-700'} px-4 py-2 rounded transition-colors`}>
+            <button className={`${theme === 'dark' ? 'btn btn-outline-primary' : 'bg-blue-600 text-white hover:bg-white hover:text-blue-600 border border-transparent hover:border-blue-600'} px-4 py-2 rounded transition-colors`}>
               Login / Signup
             </button>
             <motion.button
@@ -217,9 +233,10 @@ const Header = () => {
             >
               {theme === 'dark' ? <MdSunny className="text-yellow-500" /> : <MdDarkMode className="text-gray-800" />}
             </motion.button>
-          </div>
-        </div>
-      )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   )
 }
